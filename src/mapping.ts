@@ -1,4 +1,5 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, ethereum } from "@graphprotocol/graph-ts"
+import { Transaction, Update } from '../generated/schema'
 import {
   DIAOracle,
   OracleUpdate,
@@ -7,46 +8,74 @@ import {
 import { ExampleEntity } from "../generated/schema"
 
 export function handleOracleUpdate(event: OracleUpdate): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
+  let transaction = loadTransaction(event)
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+  let update = Update.load(event.transaction.from.toHex())
+
+  if (!update) {
+    update = new Update(event.transaction.from.toHex())
   }
+  
+  update.transaction = transaction.id
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
+  update.key = event.params.key
+  update.value = event.params.value
 
-  // Entity fields can be set based on event parameters
-  entity.key = event.params.key
-  entity.value = event.params.value
+  update.save();
 
-  // Entities can be written to the store with `.save()`
-  entity.save()
 
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
+  // // Entities can be loaded from the store using a string ID; this ID
+  // // needs to be unique across all entities of the same type
+  // let entity = ExampleEntity.load(event.transaction.from.toHex())
 
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.getValue(...)
-  // - contract.values(...)
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  // if (!entity) {
+  //   entity = new ExampleEntity(event.transaction.from.toHex())
+
+  //   // Entity fields can be set using simple assignments
+  //   entity.count = BigInt.fromI32(0)
+  // }
+
+  // // BigInt and BigDecimal math are supported
+  // entity.count = entity.count + BigInt.fromI32(1)
+
+  // // Entity fields can be set based on event parameters
+  // entity.key = event.params.key
+  // entity.value = event.params.value
+
+  // // Entities can be written to the store with `.save()`
+  // entity.save()
+
+  // // Note: If a handler doesn't require existing field values, it is faster
+  // // _not_ to load the entity from the store. Instead, create it fresh with
+  // // `new Entity(...)`, set the fields that should be updated and save the
+  // // entity back to the store. Fields that were not set or unset remain
+  // // unchanged, allowing for partial updates to be applied.
+
+  // // It is also possible to access smart contracts from mappings. For
+  // // example, the contract that has emitted the event can be connected to
+  // // with:
+  // //
+  // // let contract = Contract.bind(event.address)
+  // //
+  // // The following functions can then be called on this contract to access
+  // // state variables and other data:
+  // //
+  // // - contract.getValue(...)
+  // // - contract.values(...)
 }
 
 export function handleUpdaterAddressChange(event: UpdaterAddressChange): void {}
+
+export function loadTransaction(event: ethereum.Event): Transaction {
+  let transaction = Transaction.load(event.transaction.hash.toHexString())
+  if (transaction === null) {
+    transaction = new Transaction(event.transaction.hash.toHexString())
+  }
+  transaction.blockNumber = event.block.number
+  transaction.timestamp = event.block.timestamp
+  transaction.save()
+  return transaction as Transaction
+}

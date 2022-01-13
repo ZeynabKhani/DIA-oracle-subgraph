@@ -1,6 +1,6 @@
 specVersion: 0.0.2
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: DIAOracle
@@ -17,10 +17,10 @@ dataSources:
         - UpdaterAddressChange
       abis:
         - name: DIAOracle
-          file: ./abis/DIAOracle.json
+          file: DIAOracle/abis/DIAOracle.json
       eventHandlers:
         - event: OracleUpdate(string,uint128,uint128)
           handler: handleOracleUpdate
         - event: UpdaterAddressChange(address)
           handler: handleUpdaterAddressChange
-      file: ./src/mapping.ts
+      file: DIAOracle/DIAOracle.wasm
